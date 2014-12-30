@@ -90,6 +90,19 @@ func (this GobEncoding) Unmarshal(data []byte) (v interface{}, err error) {
 	return
 }
 
+type ByteEncoding struct {
+}
+
+func (this ByteEncoding) Marshal(v interface{}) (data []byte, err error) {
+	data = v.([]byte)
+	return
+}
+
+func (this ByteEncoding) Unmarshal(data []byte) (v interface{}, err error) {
+	v = data
+	return
+}
+
 type String string
 
 func (this String) ToString() string {
