@@ -40,10 +40,6 @@ type Encoding interface {
 	Unmarshal(data []byte) (interface{}, error)
 }
 
-type Key interface {
-	ToString() string
-}
-
 type JsonEncoding struct {
 	T reflect.Type
 }
@@ -101,12 +97,6 @@ func (this ByteEncoding) Marshal(v interface{}) (data []byte, err error) {
 func (this ByteEncoding) Unmarshal(data []byte) (v interface{}, err error) {
 	v = data
 	return
-}
-
-type String string
-
-func (this String) ToString() string {
-	return string(this)
 }
 
 func NewStorageProxy(prefered, backup Storage) *StorageProxy {
