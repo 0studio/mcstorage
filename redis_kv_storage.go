@@ -1,5 +1,9 @@
 package storage
 
+import (
+	"github.com/0studio/storage_key"
+)
+
 type RedisStorage struct {
 	client            RedisClient
 	KeyPrefix         string
@@ -7,29 +11,29 @@ type RedisStorage struct {
 	encoding          Encoding
 }
 
-func NewRedisStorage(serverUrl string, keyPrefix string, defaultExpireTime int,encoding Encoding)(RedisStorage,error){
-	client,err:=InitClient(serverUrl)
-	return RedisStorage{client, keyPrefix, defaultExpireTime, encoding},err
+func NewRedisStorage(serverUrl string, keyPrefix string, defaultExpireTime int, encoding Encoding) (RedisStorage, error) {
+	client, err := InitClient(serverUrl)
+	return RedisStorage{client, keyPrefix, defaultExpireTime, encoding}, err
 }
 
-func (this RedisStorage) Get(key Key) (interface{}, error) {
+func (this RedisStorage) Get(key key.Key) (interface{}, error) {
 	cacheKey, err := BuildCacheKey(this.KeyPrefix, key)
 	if err != nil {
 		return nil, err
 	}
 	data, err := this.client.Get(cacheKey)
-	if err != nil||data==nil {
+	if err != nil || data == nil {
 		return nil, err
 	}
 	object, err := this.encoding.Unmarshal(data)
 	if err != nil {
 		return nil, err
 	}
-	return object,nil
+	return object, nil
 
 }
 
-func (this RedisStorage) Set(key Key, object interface{}) error {
+func (this RedisStorage) Set(key key.Key, object interface{}) error {
 	buf, err := this.encoding.Marshal(object)
 	if err != nil {
 		return err
@@ -38,11 +42,11 @@ func (this RedisStorage) Set(key Key, object interface{}) error {
 	if err != nil {
 		return err
 	}
-	this.client.Set(keyCache,buf)
+	this.client.Set(keyCache, buf)
 	return nil
 }
 
-func (this RedisStorage) MultiGet(keys []Key) (map[Key]interface{}, error){
+func (this RedisStorage) MultiGet(keys []key.Key) (map[key.Key]interface{}, error) {
 	cacheKeys := make([]interface{}, len(keys))
 	for index, key := range keys {
 		cacheKey, err := BuildCacheKey(this.KeyPrefix, key)
@@ -55,37 +59,37 @@ func (this RedisStorage) MultiGet(keys []Key) (map[Key]interface{}, error){
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[Key]interface{})
-	for i,value :=range values{
-		if value==nil{
+	result := make(map[key.Key]interface{})
+	for i, value := range values {
+		if value == nil {
 			continue
 		}
-		object,err:=this.encoding.Unmarshal(value.([]byte))
+		object, err := this.encoding.Unmarshal(value.([]byte))
 		if err != nil {
 			continue
 		}
-		result[keys[i]]=object
+		result[keys[i]] = object
 	}
 	return result, nil
 }
 
-func (this RedisStorage) MultiSet(valueMap map[Key]interface{}) error{
-	tempMap:=make(map[string][]byte)
-	for key,value :=range valueMap{
+func (this RedisStorage) MultiSet(valueMap map[key.Key]interface{}) error {
+	tempMap := make(map[string][]byte)
+	for key, value := range valueMap {
 		buf, err := this.encoding.Marshal(value)
-		if err!=nil{
+		if err != nil {
 			continue
 		}
-		cacheKey,err:=BuildCacheKey(this.KeyPrefix, key)
-		if err!=nil{
+		cacheKey, err := BuildCacheKey(this.KeyPrefix, key)
+		if err != nil {
 			continue
 		}
-		tempMap[cacheKey]=buf
+		tempMap[cacheKey] = buf
 	}
 	return this.client.MultiSet(tempMap)
 }
 
-func (this RedisStorage) Delete(key Key) error{
+func (this RedisStorage) Delete(key key.Key) error {
 	cacheKey, err := BuildCacheKey(this.KeyPrefix, key)
 	if err != nil {
 		return err
@@ -93,6 +97,6 @@ func (this RedisStorage) Delete(key Key) error{
 	return this.client.Delete(cacheKey)
 }
 
-func (this RedisStorage) FlushAll(){
+func (this RedisStorage) FlushAll() {
 	this.client.ClearAll()
 }

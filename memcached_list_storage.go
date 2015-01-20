@@ -1,29 +1,33 @@
 package storage
 
-var MAXLEN=200
+import (
+	"github.com/0studio/storage_key"
+)
 
-func (this MemcachedStorage) Getlimit(key Key,sinceId,maxId interface{},page,count int)(interface{},error){
-	obj,err:=this.Get(key)
-	if err!=nil{
-		return nil,err
+var MAXLEN = 200
+
+func (this MemcachedStorage) Getlimit(key key.Key, sinceId, maxId interface{}, page, count int) (interface{}, error) {
+	obj, err := this.Get(key)
+	if err != nil {
+		return nil, err
 	}
-	return Page(obj.(Pagerable),sinceId,maxId,page,count),nil
+	return Page(obj.(Pagerable), sinceId, maxId, page, count), nil
 }
 
-func (this MemcachedStorage) AddItem(key Key,item interface{})error{
-	obj,err:=this.Get(key)
-	if err!=nil{
+func (this MemcachedStorage) AddItem(key key.Key, item interface{}) error {
+	obj, err := this.Get(key)
+	if err != nil {
 		return err
 	}
-	result:=obj.(Pagerable).AddItem(item,MAXLEN)
-	return this.Set(key,result)
+	result := obj.(Pagerable).AddItem(item, MAXLEN)
+	return this.Set(key, result)
 }
 
-func (this MemcachedStorage) DeleteItem(key Key,item interface{})error{
-	obj,err:=this.Get(key)
-	if err!=nil{
+func (this MemcachedStorage) DeleteItem(key key.Key, item interface{}) error {
+	obj, err := this.Get(key)
+	if err != nil {
 		return err
 	}
-	result:=obj.(Pagerable).DeleteItem(item)
-	return this.Set(key,result)
+	result := obj.(Pagerable).DeleteItem(item)
+	return this.Set(key, result)
 }
