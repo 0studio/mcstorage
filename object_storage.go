@@ -162,7 +162,7 @@ func (this StorageProxy) MultiGet(keys []key.Key) (map[key.Key]interface{}, erro
 		if err != nil {
 			return nil, err
 		}
-		this.MultiSet(missedMap)
+		this.PreferedStorage.MultiSet(missedMap)
 		for k, v := range missedMap {
 			resultMap[k] = v
 		}
