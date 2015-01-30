@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/0studio/redisapi"
 	"github.com/0studio/storage_key"
 	"reflect"
 	"sort"
@@ -15,7 +16,7 @@ type RedisListStorage struct {
 type DecodeList func(data []interface{}) Pagerable
 
 func NewRedisListStorage(serverUrl string, keyPrefix string, defaultExpireTime int, decode DecodeList) (RedisListStorage, error) {
-	client, err := InitClient(serverUrl)
+	client, err := redisapi.InitDefaultClient(serverUrl)
 	redisStorage := RedisStorage{client, keyPrefix, defaultExpireTime, nil}
 	return RedisListStorage{redisStorage, decode}, err
 }

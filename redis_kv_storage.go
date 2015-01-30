@@ -1,18 +1,19 @@
 package storage
 
 import (
+	"github.com/0studio/redisapi"
 	"github.com/0studio/storage_key"
 )
 
 type RedisStorage struct {
-	client            RedisClient
+	client            redisapi.Redis
 	KeyPrefix         string
 	DefaultExpireTime int
 	encoding          Encoding
 }
 
 func NewRedisStorage(serverUrl string, keyPrefix string, defaultExpireTime int, encoding Encoding) (RedisStorage, error) {
-	client, err := InitClient(serverUrl)
+	client, err := redisapi.InitDefaultClient(serverUrl)
 	return RedisStorage{client, keyPrefix, defaultExpireTime, encoding}, err
 }
 
