@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/0studio/storage_key"
 	"github.com/dropbox/godropbox/memcache"
 )
 
@@ -19,7 +20,7 @@ func NewMcStorage(client memcache.Client, keyPrefix string, defaultExpireTime in
 	return MemcachedStorage{client, keyPrefix, defaultExpireTime, encoding}
 }
 
-func (this MemcachedStorage) Get(key Key) (interface{}, error) {
+func (this MemcachedStorage) Get(key key.Key) (interface{}, error) {
 	cacheKey, err := BuildCacheKey(this.KeyPrefix, key)
 	if err != nil {
 		return nil, err
@@ -37,7 +38,7 @@ func (this MemcachedStorage) Get(key Key) (interface{}, error) {
 	}
 }
 
-func (this MemcachedStorage) Set(key Key, object interface{}) error {
+func (this MemcachedStorage) Set(key key.Key, object interface{}) error {
 	if object == nil {
 		return nil
 	}
@@ -59,8 +60,8 @@ func (this MemcachedStorage) Set(key Key, object interface{}) error {
 	return response.Error()
 }
 
-func (this MemcachedStorage) MultiGet(keys []Key) (map[Key]interface{}, error) {
-	keyMap := make(map[Key]interface{})
+func (this MemcachedStorage) MultiGet(keys []key.Key) (map[key.Key]interface{}, error) {
+	keyMap := make(map[key.Key]interface{})
 	for _, key := range keys {
 		keyMap[key] = nil
 	}
@@ -75,7 +76,7 @@ func (this MemcachedStorage) MultiGet(keys []Key) (map[Key]interface{}, error) {
 		i = i + 1
 	}
 	itemMap := this.client.GetMulti(cacheKeys)
-	result := make(map[Key]interface{})
+	result := make(map[key.Key]interface{})
 	for k, item := range itemMap {
 		if len(item.Value()) == 0 {
 			continue
@@ -89,7 +90,7 @@ func (this MemcachedStorage) MultiGet(keys []Key) (map[Key]interface{}, error) {
 	return result, nil
 }
 
-func (this MemcachedStorage) MultiSet(objectMap map[Key]interface{}) error {
+func (this MemcachedStorage) MultiSet(objectMap map[key.Key]interface{}) error {
 	items := make([]*memcache.Item, 0, len(objectMap))
 	for k, v := range objectMap {
 		buf, err := this.encoding.Marshal(v)
@@ -109,7 +110,7 @@ func (this MemcachedStorage) MultiSet(objectMap map[Key]interface{}) error {
 	return nil
 }
 
-func (this MemcachedStorage) Delete(key Key) error {
+func (this MemcachedStorage) Delete(key key.Key) error {
 	cacheKey, err := BuildCacheKey(this.KeyPrefix, key)
 	if err != nil {
 		return err
@@ -122,16 +123,16 @@ func (this MemcachedStorage) FlushAll() {
 	this.client.Flush(uint32(0))
 }
 
-func BuildCacheKey(keyPrefix string, key Key) (cacheKey string, err error) {
+func BuildCacheKey(keyPrefix string, key key.Key) (cacheKey string, err error) {
 	if key == nil {
 		return "", errors.New("key should not be nil")
 	}
 	return strings.Join([]string{keyPrefix, key.ToString()}, "_"), nil
 }
 
-func GetRawKey(key string) (rawKey String) {
-	keys := strings.Split(key, "_")
-	return String(keys[len(keys)-1])
+func GetRawKey(Key string) (rawKey key.String) {
+	keys := strings.Split(Key, "_")
+	return key.String(keys[len(keys)-1])
 }
 
 func InitializeStruct(t reflect.Type, v reflect.Value) {
