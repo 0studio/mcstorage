@@ -21,6 +21,8 @@ type Redis interface {
 
 	Brpop(key string, timeoutSecs int) (interface{}, error)
 
+	Rpop(key string) (interface{}, error)
+
 	Set(key string, value []byte) error
 
 	Get(key string) ([]byte, error)
@@ -127,6 +129,17 @@ func (rc RedisClient) Brpop(key string, timeoutSecs int) (interface{}, error) {
 		return nil, err
 	}
 	return string(values[1].([]byte)), err
+}
+
+func (rc RedisClient) Rpop(key string) (interface{}, error) {
+	conn := rc.connectInit()
+	defer conn.Close()
+
+	value, err := conn.Do("RPOP", key)
+	if err != nil {
+		return nil, err
+	}
+	return string(value.([]byte)), err
 }
 
 func (rc RedisClient) Set(key string, value []byte) error {
