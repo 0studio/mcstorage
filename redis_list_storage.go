@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"github.com/0studio/redisapi"
 	"github.com/0studio/storage_key"
 	"reflect"
@@ -40,6 +41,14 @@ func (this RedisListStorage) Set(key key.Key, object interface{}) error {
 		return err
 	}
 	return this.client.Rpush(cacheKey, object)
+}
+
+func (this RedisListStorage) GetMulti(key key.Key) (map[key.Key]interface{}, error) {
+	return nil, errors.New("unrealized")
+}
+
+func (this RedisListStorage) SetMulti(key key.Key, objectMap map[key.Key]interface{}) error {
+	return errors.New("unrealized")
 }
 
 func (this RedisListStorage) MultiGet(keys []key.Key) (map[key.Key]interface{}, error) {

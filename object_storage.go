@@ -12,6 +12,8 @@ import (
 type Storage interface {
 	Get(key key.Key) (interface{}, error)
 	Set(key key.Key, object interface{}) error
+	GetMulti(key key.Key) (map[key.Key]interface{}, error)
+	SetMulti(key key.Key, objectMap map[key.Key]interface{}) error
 	MultiGet(keys []key.Key) (map[key.Key]interface{}, error)
 	MultiSet(map[key.Key]interface{}) error
 	Delete(key key.Key) error
@@ -134,6 +136,35 @@ func (this StorageProxy) Set(key key.Key, object interface{}) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (this StorageProxy) GetMulti(key key.Key) (map[key.Key]interface{}, error) {
+	object, err := this.PreferedStorage.GetMulti(key)
+	if err != nil {
+		return nil, err
+	}
+	if object == nil {
+		object, err = this.BackupStorage.GetMulti(key)
+		if err != nil {
+			return nil, err
+		}
+		if object != nil {
+			this.PreferedStorage.SetMulti(key, object)
+		}
+	}
+	return object, nil
+}
+
+func (this StorageProxy) SetMulti(key key.Key, objectMap map[key.Key]interface{}) error {
+	err := this.PreferedStorage.SetMulti(key, objectMap)
+	if err != nil {
+		return err
+	}
+	err = this.BackupStorage.SetMulti(key, objectMap)
+	if err != nil {
+		return err
 	}
 	return nil
 }
