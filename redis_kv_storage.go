@@ -48,6 +48,10 @@ func (this RedisStorage) Set(key key.Key, object interface{}) error {
 	return nil
 }
 
+func (this RedisStorage) Add(key key.Key, object interface{}) error {
+	return this.Set(key, object)
+}
+
 func (this RedisStorage) GetMulti(key key.Key) (map[key.Key]interface{}, error) {
 	return nil, errors.New("unrealized")
 }
