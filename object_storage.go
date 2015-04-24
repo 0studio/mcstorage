@@ -113,7 +113,12 @@ func NewStorageProxy(prefered, backup Storage) *StorageProxy {
 func (this StorageProxy) Get(key key.Key) (interface{}, error) {
 	object, err := this.PreferedStorage.Get(key)
 	if err != nil {
-		return nil, err
+		object, err = this.BackupStorage.Get(key)
+		if err == nil {
+			return object, nil
+		} else {
+			return nil, err
+		}
 	}
 	if object == nil {
 		object, err = this.BackupStorage.Get(key)
