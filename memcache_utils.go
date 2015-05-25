@@ -11,18 +11,31 @@ import (
 func GetClient(mcSetting string, maxActiveConnCnt int32, maxIdleConnCnt uint32, readTimeout, writeTimeout time.Duration, logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
 	mcAddrList := strings.Split(mcSetting, ",")
 	if len(mcAddrList) == 1 {
-		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, logError, logInfo)
+		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, nil, logError, logInfo)
 		// getSingleClient(mcAddrList[0])
 	} else if len(mcAddrList) == 0 { // 0 ,
 		panic("could not load mc setting,mcAddrList len 0")
 		return
 	} else { // >1
-		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, logError, logInfo)
+		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, nil, logError, logInfo)
+	}
+	return
+}
+func GetClient2(mcSetting string, maxActiveConnCnt int32, maxIdleConnCnt uint32, readTimeout, writeTimeout time.Duration, shardFunc func(key string, numShard int) (ret int), logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
+	mcAddrList := strings.Split(mcSetting, ",")
+	if len(mcAddrList) == 1 {
+		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, shardFunc, logError, logInfo)
+		// getSingleClient(mcAddrList[0])
+	} else if len(mcAddrList) == 0 { // 0 ,
+		panic("could not load mc setting,mcAddrList len 0")
+		return
+	} else { // >1
+		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, shardFunc, logError, logInfo)
 	}
 	return
 }
 
-func getClientFromShardPool(mcAddrList []string, maxActiveConnCnt int32, maxIdleConnCnt uint32, readTimeout, writeTimeout time.Duration, logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
+func getClientFromShardPool(mcAddrList []string, maxActiveConnCnt int32, maxIdleConnCnt uint32, readTimeout, writeTimeout time.Duration, shardFunc func(key string, numShard int) (ret int), logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
 	options := net2.ConnectionOptions{
 		MaxActiveConnections: maxActiveConnCnt,
 		MaxIdleConnections:   maxIdleConnCnt,
@@ -30,11 +43,8 @@ func getClientFromShardPool(mcAddrList []string, maxActiveConnCnt int32, maxIdle
 		WriteTimeout:         writeTimeout,
 	}
 
-	manager := NewStaticShardManager(
-		mcAddrList,
-		logError,
-		logInfo,
-		func(key string, numShard int) (ret int) {
+	if shardFunc == nil {
+		shardFunc = func(key string, numShard int) (ret int) {
 			if numShard == 0 {
 				return -1
 			}
@@ -44,7 +54,14 @@ func getClientFromShardPool(mcAddrList []string, maxActiveConnCnt int32, maxIdle
 			}
 			ret = int(crc32.ChecksumIEEE([]byte(key))) % len(mcAddrList)
 			return
-		},
+		}
+	}
+
+	manager := NewStaticShardManager(
+		mcAddrList,
+		logError,
+		logInfo,
+		shardFunc,
 		options)
 	mc = memcache.NewShardedClient(manager)
 
