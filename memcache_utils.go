@@ -1,9 +1,11 @@
 package storage
 
 import (
+	jump "github.com/dgryski/go-jump"
 	"github.com/dropbox/godropbox/memcache"
 	"github.com/dropbox/godropbox/net2"
-	"hash/crc32"
+	// "hash/crc32"
+	key "github.com/0studio/storage_key"
 	"strings"
 	"time"
 )
@@ -44,7 +46,7 @@ func getClientFromShardPool(mcAddrList []string, maxActiveConnCnt int32, maxIdle
 	}
 
 	if shardFunc == nil {
-		shardFunc = func(key string, numShard int) (ret int) {
+		shardFunc = func(mcKey string, numShard int) (ret int) {
 			if numShard == 0 {
 				return -1
 			}
@@ -52,7 +54,10 @@ func getClientFromShardPool(mcAddrList []string, maxActiveConnCnt int32, maxIdle
 			if numShard < 2 {
 				return 0
 			}
-			ret = int(crc32.ChecksumIEEE([]byte(key))) % len(mcAddrList)
+			// https://github.com/renstrom/go-jump-consistent-hash
+			// jump 一致性hash 算法
+			ret = int(jump.Hash(uint64(key.String(mcKey).ToSum()), numShard))
+			// ret = int(crc32.ChecksumIEEE([]byte(key))) % len(mcAddrList)
 			return
 		}
 	}
