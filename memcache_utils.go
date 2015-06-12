@@ -1,48 +1,42 @@
 package storage
 
 import (
+	key "github.com/0studio/storage_key"
 	jump "github.com/dgryski/go-jump"
 	"github.com/dropbox/godropbox/memcache"
 	"github.com/dropbox/godropbox/net2"
-	// "hash/crc32"
-	key "github.com/0studio/storage_key"
-	"strings"
 	"time"
 )
 
-func GetClient(mcSetting string, maxActiveConnCnt int32, maxIdleConnCnt uint32, readTimeout, writeTimeout time.Duration, logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
-	mcAddrList := strings.Split(mcSetting, ",")
-	if len(mcAddrList) == 1 {
-		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, nil, logError, logInfo)
-		// getSingleClient(mcAddrList[0])
-	} else if len(mcAddrList) == 0 { // 0 ,
-		panic("could not load mc setting,mcAddrList len 0")
-		return
-	} else { // >1
-		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, nil, logError, logInfo)
-	}
-	return
-}
-func GetClient2(mcSetting string, maxActiveConnCnt int32, maxIdleConnCnt uint32, readTimeout, writeTimeout time.Duration, shardFunc func(key string, numShard int) (ret int), logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
-	mcAddrList := strings.Split(mcSetting, ",")
-	if len(mcAddrList) == 1 {
-		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, shardFunc, logError, logInfo)
-		// getSingleClient(mcAddrList[0])
-	} else if len(mcAddrList) == 0 { // 0 ,
-		panic("could not load mc setting,mcAddrList len 0")
-		return
-	} else { // >1
-		return getClientFromShardPool(mcAddrList, maxActiveConnCnt, maxIdleConnCnt, readTimeout, writeTimeout, shardFunc, logError, logInfo)
-	}
-	return
+type MemcacheConfig struct {
+	AddrList             []string `json:"addr,omitempty"` // list of "ip:port"
+	MaxActiveConnections int32    `json:"max_active_connections,omitempty"`
+	MaxIdleConnections   uint32   `json:"max_idle_connections,omitempty"`
+	ReadTimeOutMS        int      `json:"read_timeout_ms,omitempty"`
+	WriteTimeOutMS       int      `json:"read_timeout_ms,omitempty"`
 }
 
-func getClientFromShardPool(mcAddrList []string, maxActiveConnCnt int32, maxIdleConnCnt uint32, readTimeout, writeTimeout time.Duration, shardFunc func(key string, numShard int) (ret int), logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
+func GetClient(config MemcacheConfig, logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
+	if len(config.AddrList) == 0 {
+		panic("could not load mc setting,mcAddrList len 0")
+	}
+
+	return getClientFromShardPool(config, nil, logError, logInfo)
+}
+func GetClient2(config MemcacheConfig, shardFunc func(key string, numShard int) (ret int), logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
+	if len(config.AddrList) == 0 {
+		panic("could not load mc setting,mcAddrList len 0")
+	}
+
+	return getClientFromShardPool(config, shardFunc, logError, logInfo)
+}
+
+func getClientFromShardPool(config MemcacheConfig, shardFunc func(key string, numShard int) (ret int), logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
 	options := net2.ConnectionOptions{
-		MaxActiveConnections: maxActiveConnCnt,
-		MaxIdleConnections:   maxIdleConnCnt,
-		ReadTimeout:          readTimeout,
-		WriteTimeout:         writeTimeout,
+		MaxActiveConnections: config.MaxActiveConnections,
+		MaxIdleConnections:   config.MaxIdleConnections,
+		ReadTimeout:          time.Duration(config.ReadTimeOutMS) * time.Millisecond,
+		WriteTimeout:         time.Duration(config.WriteTimeOutMS) * time.Millisecond,
 	}
 
 	if shardFunc == nil {
@@ -63,7 +57,7 @@ func getClientFromShardPool(mcAddrList []string, maxActiveConnCnt int32, maxIdle
 	}
 
 	manager := NewStaticShardManager(
-		mcAddrList,
+		config.AddrList,
 		logError,
 		logInfo,
 		shardFunc,
