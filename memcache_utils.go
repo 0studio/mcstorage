@@ -13,7 +13,7 @@ type MemcacheConfig struct {
 	MaxActiveConnections int32    `json:"max_active_connections,omitempty"`
 	MaxIdleConnections   uint32   `json:"max_idle_connections,omitempty"`
 	ReadTimeOutMS        int      `json:"read_timeout_ms,omitempty"`
-	WriteTimeOutMS       int      `json:"read_timeout_ms,omitempty"`
+	WriteTimeOutMS       int      `json:"write_timeout_ms,omitempty"`
 }
 
 func GetClient(config MemcacheConfig, logError func(error), logInfo func(v ...interface{})) (mc memcache.Client) {
