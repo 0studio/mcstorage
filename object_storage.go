@@ -165,12 +165,13 @@ func (this StorageProxy) GetMulti(key key.Key) (map[key.Key]interface{}, error) 
 	if err != nil {
 		return nil, err
 	}
-	if object == nil {
+
+	if object == nil || len(object) == 0 {
 		object, err = this.BackupStorage.GetMulti(key)
 		if err != nil {
 			return nil, err
 		}
-		if object != nil {
+		if object != nil && len(object) != 0 {
 			this.PreferedStorage.SetMulti(key, object)
 		}
 	}
