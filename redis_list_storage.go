@@ -43,14 +43,6 @@ func (this RedisListStorage) Set(key key.Key, object interface{}) error {
 	return this.client.Rpush(cacheKey, object)
 }
 
-func (this RedisListStorage) GetMulti(key key.Key) (map[key.Key]interface{}, error) {
-	return nil, errors.New("unrealized")
-}
-
-func (this RedisListStorage) SetMulti(key key.Key, objectMap map[key.Key]interface{}) error {
-	return errors.New("unrealized")
-}
-
 func (this RedisListStorage) MultiGet(keys []key.Key) (map[key.Key]interface{}, error) {
 	result := make(map[key.Key]interface{})
 	for _, key := range keys {
@@ -72,6 +64,14 @@ func (this RedisListStorage) MultiSet(valueMap map[key.Key]interface{}) error {
 		this.client.Lpush(cacheKey, value)
 	}
 	return nil
+}
+
+func (this RedisListStorage) GetKeyList(k key.Key) ([]key.Key, error) {
+	return []key.Key{}, errors.New("unrealized")
+}
+
+func (this RedisListStorage) PutKey(key key.Key, keys []key.Key) error {
+	return errors.New("unrealized")
 }
 
 func (this RedisListStorage) Getlimit(key key.Key, sinceId, maxId interface{}, page, count int) (interface{}, error) {

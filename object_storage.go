@@ -13,11 +13,11 @@ type Storage interface {
 	Get(key key.Key) (interface{}, error)
 	Set(key key.Key, object interface{}) error
 	Add(key key.Key, object interface{}) error
-	GetMulti(key key.Key) (map[key.Key]interface{}, error)
-	SetMulti(key key.Key, objectMap map[key.Key]interface{}) error
 	MultiGet(keys []key.Key) (map[key.Key]interface{}, error)
 	MultiSet(map[key.Key]interface{}) error
 	Delete(key key.Key) error
+	GetKeyList(key key.Key) ([]key.Key, error)
+	PutKey(key key.Key, keys []key.Key) error
 	FlushAll()
 }
 
@@ -160,36 +160,6 @@ func (this StorageProxy) Add(key key.Key, object interface{}) error {
 	return nil
 }
 
-func (this StorageProxy) GetMulti(key key.Key) (map[key.Key]interface{}, error) {
-	object, err := this.PreferedStorage.GetMulti(key)
-	if err != nil {
-		return nil, err
-	}
-
-	if object == nil || len(object) == 0 {
-		object, err = this.BackupStorage.GetMulti(key)
-		if err != nil {
-			return nil, err
-		}
-		if object != nil && len(object) != 0 {
-			this.PreferedStorage.SetMulti(key, object)
-		}
-	}
-	return object, nil
-}
-
-func (this StorageProxy) SetMulti(key key.Key, objectMap map[key.Key]interface{}) error {
-	err := this.PreferedStorage.SetMulti(key, objectMap)
-	if err != nil {
-		return err
-	}
-	err = this.BackupStorage.SetMulti(key, objectMap)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (this StorageProxy) MultiGet(keys []key.Key) (map[key.Key]interface{}, error) {
 	resultMap, err := this.PreferedStorage.MultiGet(keys)
 	if err != nil {
@@ -244,6 +214,32 @@ func (this StorageProxy) Delete(key key.Key) error {
 		return err
 	}
 	return nil
+}
+
+func (this StorageProxy) GetKeyList(key key.Key) ([]key.Key, error) {
+	keys, err := this.PreferedStorage.GetKeyList(key)
+	if err != nil {
+		return keys, err
+	}
+	if len(keys) == 0 {
+		keys, err = this.BackupStorage.GetKeyList(key)
+		if err != nil {
+			return keys, err
+		}
+		if len(keys) != 0 {
+			this.BackupStorage.PutKey(key, keys)
+		}
+	}
+	return keys, nil
+}
+
+func (this StorageProxy) PutKey(key key.Key, keys []key.Key) error {
+	err := this.BackupStorage.PutKey(key, keys)
+	if err != nil {
+		return err
+	}
+	err = this.PreferedStorage.PutKey(key, keys)
+	return err
 }
 
 func (this StorageProxy) Incr(key key.Key, step uint64) (newValue uint64, err error) {
