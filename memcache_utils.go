@@ -62,7 +62,7 @@ func getClientFromShardPool(config MemcacheConfig, shardFunc func(key string, nu
 		logInfo,
 		shardFunc,
 		options)
-	mc = memcache.NewShardedClient(manager)
+	mc = memcache.NewShardedClient(manager, false)
 
 	return
 }
