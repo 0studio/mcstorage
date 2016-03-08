@@ -5,8 +5,9 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"github.com/0studio/storage_key"
 	"reflect"
+
+	"github.com/0studio/storage_key"
 )
 
 type Storage interface {
@@ -227,7 +228,7 @@ func (this StorageProxy) GetKeyList(key key.Key) ([]key.Key, error) {
 			return keys, err
 		}
 		if len(keys) != 0 {
-			this.BackupStorage.PutKey(key, keys)
+			this.PreferedStorage.PutKey(key, keys)
 		}
 	}
 	return keys, nil
