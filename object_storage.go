@@ -17,8 +17,6 @@ type Storage interface {
 	MultiGet(keys []key.Key) (map[key.Key]interface{}, error)
 	MultiSet(map[key.Key]interface{}) error
 	Delete(key key.Key) error
-	GetKeyList(key key.Key) ([]key.Key, error)
-	PutKey(key key.Key, keys []key.Key) error
 	FlushAll()
 }
 
@@ -104,8 +102,8 @@ func (this ByteEncoding) Unmarshal(data []byte) (v interface{}, err error) {
 	return
 }
 
-func NewStorageProxy(prefered, backup Storage) *StorageProxy {
-	return &StorageProxy{
+func NewStorageProxy(prefered, backup Storage) StorageProxy {
+	return StorageProxy{
 		PreferedStorage: prefered,
 		BackupStorage:   backup,
 	}
@@ -215,32 +213,6 @@ func (this StorageProxy) Delete(key key.Key) error {
 		return err
 	}
 	return nil
-}
-
-func (this StorageProxy) GetKeyList(key key.Key) ([]key.Key, error) {
-	keys, err := this.PreferedStorage.GetKeyList(key)
-	if err != nil {
-		return keys, err
-	}
-	if len(keys) == 0 {
-		keys, err = this.BackupStorage.GetKeyList(key)
-		if err != nil {
-			return keys, err
-		}
-		if len(keys) != 0 {
-			this.PreferedStorage.PutKey(key, keys)
-		}
-	}
-	return keys, nil
-}
-
-func (this StorageProxy) PutKey(key key.Key, keys []key.Key) error {
-	err := this.BackupStorage.PutKey(key, keys)
-	if err != nil {
-		return err
-	}
-	err = this.PreferedStorage.PutKey(key, keys)
-	return err
 }
 
 func (this StorageProxy) Incr(key key.Key, step uint64) (newValue uint64, err error) {

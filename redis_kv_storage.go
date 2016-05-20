@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"github.com/0studio/redisapi"
 	"github.com/0studio/storage_key"
 )
@@ -101,14 +100,6 @@ func (this RedisStorage) Delete(key key.Key) error {
 		return err
 	}
 	return this.client.Delete(cacheKey)
-}
-
-func (this RedisStorage) GetKeyList(k key.Key) ([]key.Key, error) {
-	return []key.Key{}, errors.New("unrealized")
-}
-
-func (this RedisStorage) PutKey(key key.Key, keys []key.Key) error {
-	return errors.New("unrealized")
 }
 
 func (this RedisStorage) FlushAll() {

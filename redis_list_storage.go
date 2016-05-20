@@ -1,12 +1,12 @@
 package storage
 
 import (
-	"errors"
-	"github.com/0studio/redisapi"
-	"github.com/0studio/storage_key"
 	"reflect"
 	"sort"
 	"strconv"
+
+	"github.com/0studio/redisapi"
+	"github.com/0studio/storage_key"
 )
 
 type RedisListStorage struct {
@@ -64,14 +64,6 @@ func (this RedisListStorage) MultiSet(valueMap map[key.Key]interface{}) error {
 		this.client.Lpush(cacheKey, value)
 	}
 	return nil
-}
-
-func (this RedisListStorage) GetKeyList(k key.Key) ([]key.Key, error) {
-	return []key.Key{}, errors.New("unrealized")
-}
-
-func (this RedisListStorage) PutKey(key key.Key, keys []key.Key) error {
-	return errors.New("unrealized")
 }
 
 func (this RedisListStorage) Getlimit(key key.Key, sinceId, maxId interface{}, page, count int) (interface{}, error) {
